@@ -15,10 +15,10 @@
 (define (can-be-ignored? e)
   (exn:fail:servlet-manager:no-instance? e))
 
-(define/contract ((make-sentry-wrapper dsn
-                                       #:backlog [backlog 128]
-                                       #:release [release #f]
-                                       #:environment [environment #f]) handler)
+(define/contract (make-sentry-wrapper dsn
+                                      #:backlog [backlog 128]
+                                      #:release [release #f]
+                                      #:environment [environment #f])
   (->* ((or/c false/c non-empty-string?))
        (#:backlog exact-positive-integer?
         #:release (or/c false/c non-empty-string?)
@@ -28,21 +28,25 @@
 
   (cond
     [dsn
-     (lambda (req)
-       (with-timing 'sentry "wrap-sentry"
-         (parameterize ([current-sentry (make-sentry dsn
-                                                     #:backlog backlog
-                                                     #:release release
-                                                     #:environment environment)])
-           (with-handlers ([can-be-ignored?
-                            (lambda (e)
-                              (log-koyo-sentry-debug "exception ~v ignored" (exn-message e))
-                              (raise e))]
+     (define sentry
+       (make-sentry dsn
+                    #:backlog backlog
+                    #:release release
+                    #:environment environment))
 
-                           [exn?
-                            (lambda (e)
-                              (sentry-capture-exception! e #:request req)
-                              (raise e))])
-             (handler req)))))]
+     (parameterize ([current-sentry sentry])
+       (lambda (handler)
+         (lambda (req)
+           (with-timing 'sentry "wrap-sentry"
+             (with-handlers ([can-be-ignored?
+                              (lambda (e)
+                                (log-koyo-sentry-debug "exception ~v ignored" (exn-message e))
+                                (raise e))]
 
-    [else handler]))
+                             [exn?
+                              (lambda (e)
+                                (sentry-capture-exception! e #:request req)
+                                (raise e))])
+               (handler req))))))]
+
+    [else values]))
