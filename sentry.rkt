@@ -4,10 +4,16 @@
          racket/contract
          racket/string
          sentry
-         web-server/http)
+         web-server/http
+         web-server/managers/manager)
 
 (provide
  make-sentry-wrapper)
+
+(define-logger koyo-sentry)
+
+(define (can-be-ignored? e)
+  (exn:fail:servlet-manager:no-instance? e))
 
 (define/contract ((make-sentry-wrapper dsn
                                        #:backlog [backlog 128]
@@ -28,7 +34,12 @@
                                                      #:backlog backlog
                                                      #:release release
                                                      #:environment environment)])
-           (with-handlers ([exn?
+           (with-handlers ([can-be-ignored?
+                            (lambda (e)
+                              (log-koyo-sentry-debug "exception ~v ignored" (exn-message e))
+                              (raise e))]
+
+                           [exn?
                             (lambda (e)
                               (sentry-capture-exception! e #:request req)
                               (raise e))])
