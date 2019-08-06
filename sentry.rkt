@@ -34,10 +34,10 @@
                     #:release release
                     #:environment environment))
 
-     (parameterize ([current-sentry sentry])
-       (lambda (handler)
-         (lambda (req)
-           (with-timing 'sentry "wrap-sentry"
+     (lambda (handler)
+       (lambda (req)
+         (with-timing 'sentry "wrap-sentry"
+           (parameterize ([current-sentry sentry])
              (with-handlers ([can-be-ignored?
                               (lambda (e)
                                 (log-koyo-sentry-debug "exception ~v ignored" (exn-message e))
@@ -45,6 +45,7 @@
 
                              [exn?
                               (lambda (e)
+                                (log-koyo-sentry-debug "capturing exception ~v" (exn-message e))
                                 (sentry-capture-exception! e #:request req)
                                 (raise e))])
                (handler req))))))]
