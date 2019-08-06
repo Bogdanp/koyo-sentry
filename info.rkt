@@ -1,6 +1,6 @@
 #lang info
 
-(define verison "0.0.0")
+(define verison "0.0.1")
 (define collection "koyo")
 
 (define deps '("base"
