@@ -13,41 +13,49 @@
 (define-logger koyo-sentry)
 
 (define (can-be-ignored? e)
-  (exn:fail:servlet-manager:no-instance? e))
+  (or (exn:fail:servlet-manager:no-continuation? e)
+      (exn:fail:servlet-manager:no-instance? e)))
 
-(define/contract (make-sentry-wrapper dsn
+(define (co-unsupplied/c arg unsupplied/c)
+  (if (unsupplied-arg? arg)
+      unsupplied/c
+      unsupplied-arg?))
+
+(define/contract (make-sentry-wrapper [dsn #f]
+                                      #:client [client #f]
                                       #:backlog [backlog 128]
                                       #:release [release #f]
                                       #:environment [environment #f])
-  (->* ((or/c false/c non-empty-string?))
-       (#:backlog exact-positive-integer?
-        #:release (or/c false/c non-empty-string?)
-        #:environment (or/c false/c non-empty-string?))
-       (-> (-> request? response?)
-           (-> request? response?)))
+  (->i ()
+       ([dsn (or/c false/c non-empty-string?)]
+        #:client [client (dsn) (co-unsupplied/c dsn (or/c false/c sentry?))]
+        #:backlog [backlog (client) (co-unsupplied/c client exact-positive-integer?)]
+        #:release [release (client) (co-unsupplied/c client (or/c false/c non-empty-string?))]
+        #:environment [environment (client) (co-unsupplied/c client (or/c false/c non-empty-string?))])
+       [result (-> (-> request? response?)
+                   (-> request? response?))])
 
   (cond
-    [dsn
-     (define sentry
-       (make-sentry dsn
-                    #:backlog backlog
-                    #:release release
-                    #:environment environment))
+    [(or client dsn)
+     (wrap-sentry (or client (make-sentry dsn
+                                          #:backlog backlog
+                                          #:release release
+                                          #:environment environment)))]
 
-     (lambda (handler)
-       (lambda (req)
-         (with-timing 'sentry "wrap-sentry"
-           (parameterize ([current-sentry sentry])
-             (with-handlers ([can-be-ignored?
-                              (lambda (e)
-                                (log-koyo-sentry-debug "exception ~v ignored" (exn-message e))
-                                (raise e))]
+    [else
+     values]))
 
-                             [exn?
-                              (lambda (e)
-                                (log-koyo-sentry-debug "capturing exception ~v" (exn-message e))
-                                (sentry-capture-exception! e #:request req)
-                                (raise e))])
-               (handler req))))))]
+(define (((wrap-sentry sentry) hdl) req)
+  (with-timing 'sentry "wrap-sentry"
+    (parameterize ([current-sentry sentry])
+      (with-handlers ([can-be-ignored?
+                       (lambda (e)
+                         (log-koyo-sentry-debug "exception ~v ignored" (exn-message e))
+                         (raise e))]
 
-    [else values]))
+                      [exn:fail?
+                       (lambda (e)
+                         (log-koyo-sentry-debug "capturing exception ~v" (exn-message e))
+                         (sentry-capture-exception! e #:request req)
+                         (raise e))])
+        (hdl req)))))
