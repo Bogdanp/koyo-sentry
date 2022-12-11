@@ -32,8 +32,8 @@
         #:backlog [backlog (client) (co-unsupplied/c client exact-positive-integer?)]
         #:release [release (client) (co-unsupplied/c client (or/c false/c non-empty-string?))]
         #:environment [environment (client) (co-unsupplied/c client (or/c false/c non-empty-string?))])
-       [result (-> (-> request? response?)
-                   (-> request? response?))])
+       [result (-> (-> request? any)
+                   (-> request? any))])
 
   (cond
     [(or client dsn)
