@@ -12,4 +12,4 @@
                      "scribble-lib"
                      "sentry-doc"
                      "web-server-doc"))
-(define scribblings '(("koyo-sentry.scrbl")))
+(define scribblings '(("koyo-sentry.scrbl" () ("Web Development"))))
