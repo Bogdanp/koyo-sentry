@@ -6,6 +6,7 @@
                      sentry
                      web-server/http))
 
+@title{Sentry Middleware for Koyo}
 @author[(author+email "Bogdan Popa" "bogdan@defn.io")]
 @defmodule[koyo/sentry]
 
