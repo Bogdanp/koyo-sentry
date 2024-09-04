@@ -1,14 +1,23 @@
 #lang racket/base
 
 (require koyo/profiler
-         racket/contract
+         racket/contract/base
          racket/string
          sentry
          web-server/http
          web-server/managers/manager)
 
 (provide
- make-sentry-wrapper)
+ (contract-out
+  [make-sentry-wrapper
+   (->i ()
+        ([dsn (or/c #f non-empty-string?)]
+         #:client [client (dsn) (co-unsupplied/c dsn (or/c #f sentry?))]
+         #:backlog [backlog (client) (co-unsupplied/c client exact-positive-integer?)]
+         #:release [release (client) (co-unsupplied/c client (or/c #f non-empty-string?))]
+         #:environment [environment (client) (co-unsupplied/c client (or/c #f non-empty-string?))])
+        [result (-> (-> request? any)
+                    (-> request? any))])]))
 
 (define-logger koyo-sentry)
 
@@ -21,20 +30,11 @@
       unsupplied/c
       unsupplied-arg?))
 
-(define/contract (make-sentry-wrapper [dsn #f]
-                                      #:client [client #f]
-                                      #:backlog [backlog 128]
-                                      #:release [release #f]
-                                      #:environment [environment #f])
-  (->i ()
-       ([dsn (or/c false/c non-empty-string?)]
-        #:client [client (dsn) (co-unsupplied/c dsn (or/c false/c sentry?))]
-        #:backlog [backlog (client) (co-unsupplied/c client exact-positive-integer?)]
-        #:release [release (client) (co-unsupplied/c client (or/c false/c non-empty-string?))]
-        #:environment [environment (client) (co-unsupplied/c client (or/c false/c non-empty-string?))])
-       [result (-> (-> request? any)
-                   (-> request? any))])
-
+(define (make-sentry-wrapper [dsn #f]
+                             #:client [client #f]
+                             #:backlog [backlog 128]
+                             #:release [release #f]
+                             #:environment [environment #f])
   (cond
     [(or client dsn)
      (wrap-sentry (or client (make-sentry dsn
@@ -42,8 +42,7 @@
                                           #:release release
                                           #:environment environment)))]
 
-    [else
-     values]))
+    [else values]))
 
 (define (((wrap-sentry sentry) hdl) req)
   (with-timing 'sentry "wrap-sentry"
