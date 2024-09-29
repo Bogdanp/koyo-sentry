@@ -13,7 +13,7 @@
 @(define sentry-url "https://sentry.io")
 
 This package provides a middleware that automatically sends exceptions
-to @link[sentry-url]{Sentry} when they occur.
+to @link[sentry-url]{Sentry}.
 
 @section{Reference}
 
@@ -23,13 +23,10 @@ to @link[sentry-url]{Sentry} when they occur.
                                [#:release release (or/c false/c non-empty-string?) #f]
                                [#:environment environment (or/c false/c non-empty-string?) #f]) [hdl (-> request? response?)])  (-> request? response?)]{
 
-  Creates a function that wraps a request handler so that any
-  exceptions it raises get sent to Sentry.
-
-  When @racket[client] is provided, all other arguments are
-  disallowed.  Conversely, @racket[client] may not be provided when
-  @racket[dsn] is provided.
-
-  When either @racket[client] or @racket[dsn] is is @racket[#f],
-  @racket[hdl] is returned unchanged.
+  Creates a function that wraps a request handler so that any exceptions
+  it raises get sent to Sentry and every request is tracked as a Sentry
+  transaction. When @racket[client] is provided, all other arguments
+  are disallowed. Conversely, @racket[client] may not be provided when
+  @racket[dsn] is provided. When either @racket[client] or @racket[dsn]
+  is is @racket[#f], @racket[hdl] is returned unchanged.
 }
