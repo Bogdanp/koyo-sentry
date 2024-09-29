@@ -108,7 +108,7 @@
 (define (request-txn-name req)
   (format "~a ~a"
           (request-method req)
-          (url->string (request-uri req))))
+          (url-path* (request-uri req))))
 
 (define (url-query* u)
   (alist->form-urlencoded (url-query u)))
