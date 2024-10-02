@@ -1,6 +1,7 @@
 #lang racket/base
 
 (require koyo/http
+         koyo/job
          koyo/profiler
          net/uri-codec
          net/url
@@ -54,6 +55,9 @@
     [else
      values]))
 
+
+;; request ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define (((wrap-sentry sentry) hdl) req)
   (with-timing 'sentry "wrap-sentry"
     (parameterize ([current-sentry sentry])
@@ -98,12 +102,13 @@
     [_ (values #f #f #t)]))
 
 (define (request-trace-data req)
-  (define uri (request-uri req))
-  (make-hasheq
-   `((http.request.method . ,(bytes->string/utf-8 (request-method req)))
-     (url.scheme . ,(or (url-scheme uri) "http"))
-     (url.path . ,(url-path* uri))
-     (url.query . ,(url-query* uri)))))
+  (define uri
+    (request-uri req))
+  (hasheq
+   'http.request.method (bytes->string/utf-8 (request-method req))
+   'url.scheme (or (url-scheme uri) "http")
+   'url.path (url-path* uri)
+   'url.query (url-query* uri)))
 
 (define (request-txn-name req)
   (format "~a ~a"
@@ -112,3 +117,30 @@
 
 (define (url-query* u)
   (alist->form-urlencoded (url-query u)))
+
+
+;; job ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(provide
+ wrap-sentry/job)
+
+(define ((wrap-sentry/job sentry) meta proc)
+  (with-timing 'sentry "wrap-sentry-job"
+    (make-keyword-procedure
+     (lambda (kws kw-args . args)
+       (parameterize ([current-sentry sentry])
+         (match-define (job-metadata id queue name attempts) meta)
+         (call-with-transaction
+           #:data (hasheq 'messaging.system "koyo"
+                          'messaging.message.id id
+                          'messaging.message.retry.count (sub1 attempts))
+           #:source 'task
+           #:operation 'queue.task
+           (format "process ~a.~a" queue name)
+           (lambda (_t)
+             (with-handlers ([exn:fail?
+                              (lambda (e)
+                                (log-koyo-sentry-debug "capturing exception ~v" (exn-message e))
+                                (sentry-capture-exception! e)
+                                (raise e))])
+               (keyword-apply proc kws kw-args args)))))))))
