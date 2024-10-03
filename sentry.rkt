@@ -155,7 +155,7 @@
                           'messaging.message.retry.count (sub1 attempts))
            #:source 'task
            #:operation 'queue.task
-           (format "process ~a.~a" queue name)
+           (format "~a.~a" queue name)
            (lambda (_t)
              (with-handlers ([exn:fail?
                               (lambda (e)
