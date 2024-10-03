@@ -119,15 +119,34 @@
   (alist->form-urlencoded (url-query u)))
 
 
+;; crontab ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(provide
+ wrap-sentry/cron)
+
+(define (((wrap-sentry/cron sentry) proc) timestamp)
+  (with-timing 'sentry "wrap-sentry/cron"
+    (parameterize ([current-sentry sentry])
+      (call-with-transaction
+        #:source 'component
+        (format "crontab.~a" (object-name proc))
+        (lambda (_)
+          (with-handlers ([exn:fail?
+                           (lambda (e)
+                             (sentry-capture-exception! e)
+                             (raise e))])
+            (proc timestamp)))))))
+
+
 ;; job ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (provide
  wrap-sentry/job)
 
 (define ((wrap-sentry/job sentry) meta proc)
-  (with-timing 'sentry "wrap-sentry-job"
-    (make-keyword-procedure
-     (lambda (kws kw-args . args)
+  (make-keyword-procedure
+   (lambda (kws kw-args . args)
+     (with-timing 'sentry "wrap-sentry/job"
        (parameterize ([current-sentry sentry])
          (match-define (job-metadata id queue name attempts) meta)
          (call-with-transaction
