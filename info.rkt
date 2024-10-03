@@ -10,7 +10,8 @@
     "threading-lib"
     "web-server-lib"))
 (define build-deps
-  '("racket-doc"
+  '("db-lib"
+    "racket-doc"
     "scribble-lib"
     "sentry-doc"
     "web-server-doc"))
