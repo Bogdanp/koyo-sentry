@@ -12,6 +12,7 @@
     "web-server-lib"))
 (define build-deps
   '("component-doc"
+    "koyo-doc"
     "racket-doc"
     "scribble-lib"
     "sentry-doc"
