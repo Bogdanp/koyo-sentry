@@ -1,16 +1,18 @@
 #lang info
 
 (define license 'BSD-3-Clause)
-(define version "0.3")
+(define version "0.4")
 (define collection "koyo")
 (define deps
   '("base"
+    ["component-lib" #:version "1.3"]
     ["koyo-lib" #:version "0.24"]
     ["sentry-lib" #:version "0.4"]
     "threading-lib"
     "web-server-lib"))
 (define build-deps
-  '("racket-doc"
+  '("component-doc"
+    "racket-doc"
     "scribble-lib"
     "sentry-doc"
     "web-server-doc"))
