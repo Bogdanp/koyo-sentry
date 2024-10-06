@@ -1,6 +1,7 @@
 #lang scribble/manual
 
 @(require (for-label component
+                     koyo/job
                      racket/base
                      racket/contract
                      racket/string
@@ -50,7 +51,7 @@ and send exceptions to @link[sentry-url]{Sentry}.
 }
 
 @defproc[((wrap-sentry/job [client (or/c #f sentry?)])
-                           [meta job-info?]
+                           [meta job-metadata?]
                            [proc procedure?]) procedure?]{
 
   Wraps @racket[proc] to trace job executions to Sentry and to capture
