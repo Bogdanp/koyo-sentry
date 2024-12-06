@@ -18,7 +18,7 @@
          (match-define (job-metadata id queue name attempts) meta)
          (call-with-transaction
            #:data (hasheq 'messaging.system "koyo"
-                          'messaging.message.id id
+                          'messaging.message.id (number->string id)
                           'messaging.message.retry.count (sub1 attempts))
            #:source 'task
            #:operation 'queue.task
