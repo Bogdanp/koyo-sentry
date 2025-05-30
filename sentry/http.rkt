@@ -62,7 +62,7 @@
   (define uri
     (request-uri req))
   (hasheq
-   'http.request.method (bytes->string/utf-8 (request-method req))
+   'http.method (bytes->string/utf-8 (request-method req))
    'url.scheme (or (url-scheme uri) "http")
    'url.path (url-path* uri)
    'url.query (url-query* uri)))
