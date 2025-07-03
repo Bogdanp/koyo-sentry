@@ -74,9 +74,7 @@
      (list k (or v "")))))
 
 (define (request-txn-name req)
-  (format "~a ~a"
-          (request-method req)
-          (url-path* (request-uri req))))
+  (url-path* (request-uri req)))
 
 (define (can-be-ignored? e)
   (or (exn:fail:servlet-manager:no-continuation? e)
