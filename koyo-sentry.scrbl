@@ -31,8 +31,8 @@ and send exceptions to @link[sentry-url]{Sentry}.
 }
 
 @defproc[((wrap-sentry [client (or/c #f sentry?)])
-                       [hdl (-> request? response?)])
-                       (-> request? response?)]{
+          [hdl (-> request? response?)])
+         (-> request? response?)]{
 
   Wraps @racket[hdl] to trace requests to Sentry and to capture any
   unhandled exceptions.
@@ -41,18 +41,24 @@ and send exceptions to @link[sentry-url]{Sentry}.
 }
 
 @defproc[((wrap-sentry/cron [client (or/c #f sentry?)])
-                            [proc (-> exact-integer? any)])
-                            (-> exact-integer? any)]{
+          [#:monitor? monitor? boolean? #f]
+          [proc (-> exact-integer? any)])
+         (-> exact-integer? any)]{
 
   Wraps @racket[proc] to trace crontab executions to Sentry and to
-  capture any unhandled exceptions.
+  capture any unhandled exceptions. When @racket[#:monitor?] is
+  @racket[#t], the cron job is monitored by Sentry.
 
-  @history[#:added "0.4"]
+  @history[
+    #:changed "0.7" @elem{Added the @racket[#:monitor?] argument.}
+    #:added "0.4"
+  ]
 }
 
 @defproc[((wrap-sentry/job [client (or/c #f sentry?)])
-                           [meta job-metadata?]
-                           [proc procedure?]) procedure?]{
+          [meta job-metadata?]
+          [proc procedure?])
+         procedure?]{
 
   Wraps @racket[proc] to trace job executions to Sentry and to capture
   any unhandled exceptions.

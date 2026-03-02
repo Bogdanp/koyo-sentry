@@ -1,13 +1,14 @@
 #lang info
 
 (define license 'BSD-3-Clause)
-(define version "0.6.2")
+(define version "0.7")
 (define collection "koyo")
 (define deps
   '("base"
     ["component-lib" #:version "1.3"]
+    ["crontab-lib" #:version "0.3"]
     ["koyo-lib" #:version "0.24"]
-    ["sentry-lib" #:version "0.6"]
+    ["sentry-lib" #:version "0.7"]
     "threading-lib"
     "web-server-lib"))
 (define build-deps
