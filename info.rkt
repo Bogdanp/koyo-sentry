@@ -1,7 +1,7 @@
 #lang info
 
 (define license 'BSD-3-Clause)
-(define version "0.7.2")
+(define version "0.7.3")
 (define collection "koyo")
 (define deps
   '("base"

@@ -21,16 +21,16 @@
          #:source 'component
          (format "crontab.~a" (object-name proc))
          (lambda (_)
-           (if monitor?
-               (call-with-monitor
-                #:config (force monitor-config)
-                (format "~a" (object-name proc))
-                (lambda ()
-                  (proc timestamp)))
-               (with-handlers ([exn:fail?
-                                (lambda (e)
-                                  (sentry-capture-exception! e)
-                                  (raise e))])
+           (with-handlers ([exn:fail?
+                            (lambda (e)
+                              (sentry-capture-exception! e)
+                              (raise e))])
+             (if monitor?
+                 (call-with-monitor
+                  #:config (force monitor-config)
+                  (format "~a" (object-name proc))
+                  (lambda ()
+                    (proc timestamp)))
                  (proc timestamp)))))))
    (object-name proc)))
 
