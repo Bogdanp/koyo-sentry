@@ -12,8 +12,6 @@
 (define ((wrap-sentry/cron sentry)
          #:monitor? [monitor? #f]
          proc)
-  (define txn-name
-    (format "crontab.~a" (object-name proc)))
   (define monitor-config
     (delay (make-monitor-config)))
   (procedure-rename
@@ -21,12 +19,12 @@
      (parameterize ([current-sentry sentry])
        (call-with-transaction
          #:source 'component
-         txn-name
+         (format "crontab.~a" (object-name proc))
          (lambda (_)
            (if monitor?
                (call-with-monitor
                 #:config (force monitor-config)
-                txn-name
+                (format "~a" (object-name proc))
                 (lambda ()
                   (proc timestamp)))
                (with-handlers ([exn:fail?
