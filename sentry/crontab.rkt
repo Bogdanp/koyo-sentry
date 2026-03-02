@@ -44,4 +44,4 @@
   ;; schedule->string always produces a crontab string that has 6 fields
   ;; (i.e. it includes seconds), but Sentry expects a UNIX style cron
   ;; schedule, so just strip the seconds fields for now.
-  (substring (crontab:schedule->string s) 2))
+  (regexp-replace #rx"^([^ ]+) " (crontab:schedule->string s) ""))
